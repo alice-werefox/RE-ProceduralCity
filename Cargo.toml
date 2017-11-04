@@ -1,0 +1,11 @@
+[package]
+name = "proceduralcity"
+description = "Procedural city generation by manipulation of .obj files - rewritten in Rust."
+repository = "https://github.tamu.edu/shadow8t4/ProceduralCity"
+version = "0.1.0"
+authors = ["Alex Huddleston <adh9694@gmail.com>","Jeremy Martin"]
+license = "MIT"
+
+[dependencies]
+obj = "0.8"
+noise = "0.4"
