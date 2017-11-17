@@ -8,7 +8,7 @@ extern crate cgmath;
 use std::io::Result;
 use std::path::Path;
 use obj::{Obj, SimplePolygon};
-//use std::f64::consts::PI;
+use std::f64::consts::PI;
 use noise::Fbm;
 use noise::Seedable;
 use noise::MultiFractal;
@@ -86,6 +86,17 @@ fn find_l_w(obj: &Obj<SimplePolygon>) -> (f32, f32) {
     }
 }
 
+/*
+ * The current layer is how many iterations you are from the center,
+ * the count is how far around the square you've gone on the current layer.
+ * This outputs the angle at which to place the new duplicate relative
+ * to the initial input obj's position.
+*/
+
+fn calculate_angle(count: i32, current_layer: i32) -> f64 {
+    ((count as f64) / (2.0 * (current_layer as f64))) * (0.5 * PI)
+}
+
 fn generate_city(
     positions: Vec<[f32; 3]>,
     layers: i32,
@@ -102,7 +113,7 @@ fn main() {
     let maybe_obj: Result<Obj<SimplePolygon>> = Obj::load(&path);
 
     if let Ok(obj) = maybe_obj {
-        println!("Postiion: {:?}", obj.position);
+        println!("Position: {:?}", obj.position);
     }
     /*
     else if Err(error) = maybe_obj {
