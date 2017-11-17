@@ -37,7 +37,7 @@ fn test(x: i32) -> i32 {
 */
 
 fn distance_a_to_b(ax: f64, ay: f64, bx: f64, by: f64) -> f64 {
-    ((bx - ax)*(bx - ax) + (by - ay)*(by - ay)).sqrt()
+    ((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).sqrt()
 }
 
 fn noise_map(seed: usize, oct: usize, freq: f64, lacu: f64, pers: f64) -> Fbm<f64> {
@@ -52,20 +52,15 @@ fn noise_map(seed: usize, oct: usize, freq: f64, lacu: f64, pers: f64) -> Fbm<f6
 fn return_at(x: f64, y: f64, fbmnoise: &Fbm<f64>) -> f64 {
     let n = 20.0 * fbmnoise.get([x, y]);
     let n = n - n.floor();
-    
+
     let m = distance_a_to_b(x, y, 0.5, 0.5);
 
-    return (m*0.15) + (n*0.85);
+    return (m * 0.15) + (n * 0.85);
 }
 
 fn find_l_w(obj: &Obj<SimplePolygon>) -> (f32, f32) {
     if let Some(first) = obj.position.first() {
-        let initial = (
-            first[0],
-            first[1],
-            first[0],
-            first[1]
-        );
+        let initial = (first[0], first[1], first[0], first[1]);
 
         let min_maxes = obj.position.iter().fold(initial, |acc, point| {
             let acc = if acc.0 > point[0] {
@@ -91,7 +86,13 @@ fn find_l_w(obj: &Obj<SimplePolygon>) -> (f32, f32) {
     }
 }
 
-fn generate_city(positions: Vec<[f32; 3]>, layers: i32, spacing: f32, length: f32, width: f32) -> Vec<[f32; 3]> {
+fn generate_city(
+    positions: Vec<[f32; 3]>,
+    layers: i32,
+    spacing: f32,
+    length: f32,
+    width: f32,
+) -> Vec<[f32; 3]> {
     positions
 }
 
