@@ -9,3 +9,4 @@ license = "MIT"
 [dependencies]
 obj = "0.8"
 noise = "0.4"
+cgmath = "0.15.0"
