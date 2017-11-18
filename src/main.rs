@@ -41,20 +41,11 @@ fn test(x: i32) -> i32 {
 }
 */
 
-fn distance_a_to_b(ax: f64, ay: f64, bx: f64, by: f64) -> f64 {
+fn distance_a_to_b(ax: f32, ay: f32, bx: f32, by: f32) -> f32 {
     ((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).sqrt()
 }
 
-fn noise_map(seed: usize, oct: usize, freq: f64, lacu: f64, pers: f64) -> Fbm<f64> {
-    Fbm::new()
-        .set_seed(seed)
-        .set_octaves(oct)
-        .set_frequency(freq)
-        .set_lacunarity(lacu)
-        .set_persistence(pers)
-}
-
-fn return_at(x: f64, y: f64, fbmnoise: &Fbm<f64>) -> f64 {
+fn return_at(x: f32, y: f32, fbmnoise: &Fbm<f32>) -> f32 {
     let n = 20.0 * fbmnoise.get([x, y]);
     let n = n - n.floor();
 
@@ -106,13 +97,16 @@ fn calculate_translation(current_layer: i32, length: f32, width: f32, angle: f32
 fn duplicate(
     positions: Vec<Vector3<f32>>,
     translation: Vector3<f32>,
-    height_vec: Vector3<f32>,
+    height_scalar: f32,
 ) -> Vec<Vector3<f32>> {
     positions
         .iter()
         .map(|point| {
-            //height_vec.mul_element_wise(point.clone()) +  translation
-            point.clone() + translation
+            Vector3::new(
+                point.x + translation.x,
+                point.y + translation.y,
+                point.z * height_scalar,
+            )
         })
         .collect()
 }
@@ -129,7 +123,9 @@ fn generate_city(
 
     let mut temp = Vector3::new(0.0, 0.0, 0.0);
 
-    //let mut coord = Vector3::new(0.0, 0.0, 0.0);
+    let mut coord = Vector3::new(0.5, 0.5, 0.0);
+
+    let fbm: Fbm<f32> = Fbm::new();
 
     (1..layers).fold(positions.clone(), |acc_positions, current_layer| {
         temp.x = -length * (current_layer as f32);
@@ -142,11 +138,15 @@ fn generate_city(
             let translation = calculate_translation(current_layer, length, width, angle);
             temp += translation;
 
-            let height_vec = Vector3::new(1.0, 1.0, 1.0);
+            coord += translation.mul_element_wise(Vector3::new(
+                (2.0 / (layers as f32 * 2.0 - 1.0)),
+                (2.0 / (layers as f32 * 2.0 - 1.0)),
+                0.0,
+            ));
 
-            let x = Vector3::new(1.0, 1.0, 1.0);
+            let height_scalar = return_at(coord.x, coord.y, &fbm);
 
-            acc_positions.extend(duplicate(positions.clone(), temp, height_vec));
+            acc_positions.extend(duplicate(positions.clone(), temp, height_scalar));
 
             acc_positions
         })
@@ -186,7 +186,7 @@ fn save(filename: &Path, positions: Vec<Vector3<f32>>, faces: Vec<Vec<IndexTuple
     }
 
     for face in faces {
-        write!(file, "f");
+        write!(file, "f").unwrap();
         for value in face {
             write!(file, " {}/", value.0).unwrap();
             if let Some(i) = value.1 {
@@ -232,7 +232,7 @@ fn main() {
             layers as usize,
         );
 
-        save(Path::new("data/noice.obj"), output_positions, output_faces);
+        save(Path::new("build/noice.obj"), output_positions, output_faces);
     }
     /*
     else if Err(error) = maybe_obj {
