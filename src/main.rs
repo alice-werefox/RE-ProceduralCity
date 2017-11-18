@@ -203,7 +203,7 @@ fn save(filename: &Path, positions: Vec<Vector3<f32>>, faces: Vec<Vec<IndexTuple
 
 fn main() {
 
-    let path = Path::new("data/test.obj");
+    let path = Path::new("data/teapot.obj");
     let maybe_obj: Result<Obj<SimplePolygon>> = Obj::load(&path);
 
     if let Ok(obj) = maybe_obj {
@@ -232,7 +232,7 @@ fn main() {
             layers as usize,
         );
 
-        save(Path::new("data/noice.obj"), output_positions, output_faces);
+        save(Path::new("build/noice.obj"), output_positions, output_faces);
     }
     /*
     else if Err(error) = maybe_obj {
