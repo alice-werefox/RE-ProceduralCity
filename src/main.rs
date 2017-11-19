@@ -12,12 +12,11 @@ use std::fs::File;
 use std::io::Write;
 use obj::{Obj, SimplePolygon, IndexTuple};
 use noise::Fbm;
-use noise::Seedable;
-use noise::MultiFractal;
+//use noise::Seedable;
+//use noise::MultiFractal;
 use noise::NoiseModule;
 use cgmath::Vector3;
 use cgmath::ElementWise;
-use cgmath::Array;
 
 // A function called test that takes in 1 32-bit integer
 // and returns a 32-bit integer.
@@ -90,7 +89,7 @@ fn calculate_angle(current_duplicate: i32, current_layer: i32) -> f32 {
     (current_duplicate / (2 * current_layer)) as f32 * (0.5 * PI)
 }
 
-fn calculate_translation(current_layer: i32, length: f32, width: f32, angle: f32) -> Vector3<f32> {
+fn calculate_translation(length: f32, width: f32, angle: f32) -> Vector3<f32> {
     Vector3::new(length * angle.cos(), width * angle.sin(), 0.0)
 }
 
@@ -135,7 +134,7 @@ fn generate_city(
 
             let angle = calculate_angle(current_duplicate, current_layer);
 
-            let translation = calculate_translation(current_layer, length, width, angle);
+            let translation = calculate_translation(length, width, angle);
             temp += translation;
 
             coord += translation.mul_element_wise(Vector3::new(
@@ -203,7 +202,7 @@ fn save(filename: &Path, positions: Vec<Vector3<f32>>, faces: Vec<Vec<IndexTuple
 
 fn main() {
 
-    let path = Path::new("data/teapot.obj");
+    let path = Path::new("data/test.obj");
     let maybe_obj: Result<Obj<SimplePolygon>> = Obj::load(&path);
 
     if let Ok(obj) = maybe_obj {
@@ -225,7 +224,6 @@ fn main() {
 
         println!("Objects: {:?}", obj.objects[0].groups[0].polys[0]);
 
-        // I have two faces, blurry's the one I'm not.
         let output_faces = copy_faces(
             obj.objects[0].groups[0].polys.clone(),
             obj.position.len(),
@@ -234,9 +232,4 @@ fn main() {
 
         save(Path::new("build/noice.obj"), output_positions, output_faces);
     }
-    /*
-    else if Err(error) = maybe_obj {
-
-    }
-    */
 }
