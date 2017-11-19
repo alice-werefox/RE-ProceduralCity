@@ -142,13 +142,6 @@ fn generate_city(
                         Vector3::new(-1.0 + ((current_ratio) - 3.0 / 4.0) * 8.0, -1.0, 0.0)
                     };
 
-                    println!(
-                        "layer: {}, x: {}, y: {}",
-                        current_layer,
-                        unit_translation.x,
-                        unit_translation.y
-                    );
-
                     duplicate(
                         &positions,
                         current_layer as f32 *
@@ -229,7 +222,7 @@ fn main() {
     if let Ok(obj) = maybe_obj {
         println!("Position: {:?}", obj.position);
 
-        let layers = 5;
+        let layers = 10;
         let spacing = 1.0;
 
         let (length, width) = find_l_w(&obj);
