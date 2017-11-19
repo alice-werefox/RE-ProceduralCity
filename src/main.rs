@@ -148,7 +148,7 @@ fn generate_city(
 
                     // gets into range -1 to +1
                     let coord =
-                        1.0/layers as f32 * translation.mul_element_wise(
+                        1.0/5.0 as f32 * translation.mul_element_wise(
                             Vector3::new(1.0 / length as f32, 1.0 / width as f32, 0.0),
                         );
 
