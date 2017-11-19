@@ -12,8 +12,8 @@ use std::fs::File;
 use std::io::Write;
 use obj::{Obj, SimplePolygon, IndexTuple};
 use noise::Fbm;
-use noise::Seedable;
-use noise::MultiFractal;
+//use noise::Seedable;
+//use noise::MultiFractal;
 use noise::NoiseModule;
 use cgmath::Vector3;
 use cgmath::ElementWise;
@@ -42,20 +42,11 @@ fn test(x: i32) -> i32 {
 }
 */
 
-fn distance_a_to_b(ax: f64, ay: f64, bx: f64, by: f64) -> f64 {
+fn distance_a_to_b(ax: f32, ay: f32, bx: f32, by: f32) -> f32 {
     ((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).sqrt()
 }
 
-fn noise_map(seed: usize, oct: usize, freq: f64, lacu: f64, pers: f64) -> Fbm<f64> {
-    Fbm::new()
-        .set_seed(seed)
-        .set_octaves(oct)
-        .set_frequency(freq)
-        .set_lacunarity(lacu)
-        .set_persistence(pers)
-}
-
-fn return_at(x: f64, y: f64, fbmnoise: &Fbm<f64>) -> f64 {
+fn return_at(x: f32, y: f32, fbmnoise: &Fbm<f32>) -> f32 {
     let n = 20.0 * fbmnoise.get([x, y]);
     let n = n - n.floor();
 
@@ -99,12 +90,16 @@ fn find_l_w(obj: &Obj<SimplePolygon>) -> (f32, f32) {
 fn duplicate(
     positions: &[Vector3<f32>],
     translation: Vector3<f32>,
-    height_vec: Vector3<f32>,
+    height_scalar: f32,
 ) -> Vec<Vector3<f32>> {
     positions
         .par_iter()
         .map(|point| {
-            height_vec.mul_element_wise(point.clone()) + translation
+            Vector3::new(
+                point.x + translation.x,
+                point.y + translation.y,
+                point.z * height_scalar,
+            )
         })
         .collect()
 }
@@ -119,7 +114,7 @@ fn generate_city(
     let length = length + spacing;
     let width = width + spacing;
 
-    let height_vec = Vector3::new(1.0, 1.0, 1.0);
+    let fbm: Fbm<f32> = Fbm::new();
 
     let mut output_positions = Vec::new();
     output_positions.extend_from_slice(positions);
@@ -142,16 +137,24 @@ fn generate_city(
                         Vector3::new(-1.0 + ((current_ratio) - 3.0 / 4.0) * 8.0, -1.0, 0.0)
                     };
 
-                    duplicate(
-                        &positions,
-                        current_layer as f32 *
-                            Vector3::new(
-                                length * unit_translation.x,
-                                width * unit_translation.y,
-                                0.0,
-                            ),
-                        height_vec,
-                    )
+                    let translation = current_layer as f32 *
+                        Vector3::new(length * unit_translation.x, width * unit_translation.y, 0.0);
+
+                    // gets into range -1 to +1
+                    let coord =
+                        translation.mul_element_wise(
+                            Vector3::new(1.0 / layers as f32, 1.0 / layers as f32, 0.0),
+                        );
+
+                    // gets into range -0.5 to +0.5
+                    let coord = coord.mul_element_wise(Vector3::new(1.0 / 2.0, 1.0 / 2.0, 0.0));
+
+                    // gets into range 0 to 1.0
+                    let coord = coord + Vector3::new(0.5, 0.5, 0.0);
+
+                    let height_scalar = return_at(coord.x, coord.y, &fbm);
+
+                    duplicate(&positions, translation, height_scalar)
                 })
                 .collect::<Vec<_>>()
         })
@@ -238,18 +241,16 @@ fn main() {
 
         println!("Objects: {:?}", obj.objects[0].groups[0].polys[0]);
 
-        // I have two faces, blurry's the one I'm not.
         let output_faces = copy_faces(
             &obj.objects[0].groups[0].polys,
             obj.position.len(),
             layers as usize,
         );
 
-        save(Path::new("data/noice.obj"), output_positions, output_faces);
+        save(
+            Path::new("target/noice.obj"),
+            output_positions,
+            output_faces,
+        );
     }
-    /*
-    else if Err(error) = maybe_obj {
-
-    }
-    */
 }
