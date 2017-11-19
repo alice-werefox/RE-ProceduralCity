@@ -92,7 +92,7 @@ fn duplicate(
     height_scalar: f32,
 ) -> Vec<Vector3<f32>> {
     positions
-        .par_iter()
+        .iter()
         .map(|point| {
             Vector3::new(
                 point.x + translation.x,
@@ -182,7 +182,7 @@ fn copy_faces(
             let offset = n_positions * current_value + 1;
 
             faces
-                .par_iter()
+                .iter()
                 .map(|current_face| {
                     current_face
                         .iter()
@@ -225,18 +225,14 @@ fn save(filename: &Path, positions: Vec<Vector3<f32>>, faces: Vec<Vec<IndexTuple
 
 fn main() {
 
-    let path = Path::new("data/test.obj");
+    let path = Path::new("data/teapot.obj");
     let maybe_obj: Result<Obj<SimplePolygon>> = Obj::load(&path);
 
     if let Ok(obj) = maybe_obj {
-        println!("Position: {:?}", obj.position);
-
         let layers = 10;
         let spacing = 1.0;
 
         let (length, width) = find_l_w(&obj);
-
-        println!("Length: {} Width: {}", length, width);
 
         let input_positions: Vec<_> = obj.position
             .iter()
@@ -244,8 +240,6 @@ fn main() {
             .collect();
 
         let output_positions = generate_city(&input_positions, layers, spacing, length, width);
-
-        println!("Objects: {:?}", obj.objects[0].groups[0].polys[0]);
 
         let output_faces = copy_faces(
             &obj.objects[0].groups[0].polys,
