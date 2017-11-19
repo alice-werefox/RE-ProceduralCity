@@ -9,7 +9,7 @@ extern crate rayon;
 use std::io::Result;
 use std::path::Path;
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufWriter, Write};
 use obj::{Obj, SimplePolygon, IndexTuple};
 use noise::Fbm;
 //use noise::Seedable;
@@ -126,10 +126,10 @@ fn generate_city(
     );
 
     let rest_vec: Vec<_> = (1..layers)
-        // .into_par_iter()
+        .into_par_iter()
         .flat_map(|current_layer| {
             (0..(current_layer * 8))
-                // .into_par_iter()
+                .into_par_iter()
                 .flat_map(|current_duplicate| {
                     let current_ratio = current_duplicate as f32 / (current_layer as f32 * 8.0);
 
@@ -147,8 +147,8 @@ fn generate_city(
                         Vector3::new(length * unit_translation.x, width * unit_translation.y, 0.0);
 
                     // gets into range -1 to +1
-                    let coord =
-                        1.0/5.0 as f32 * translation.mul_element_wise(
+                    let coord = 1.0 / 5.0 *
+                        translation.mul_element_wise(
                             Vector3::new(1.0 / length as f32, 1.0 / width as f32, 0.0),
                         );
 
@@ -201,7 +201,7 @@ fn copy_faces(
 }
 
 fn save(filename: &Path, positions: Vec<Vector3<f32>>, faces: Vec<Vec<IndexTuple>>) {
-    let mut file = File::create(filename).unwrap();
+    let mut file = BufWriter::new(File::create(filename).unwrap());
 
     for pos in positions {
         write!(file, "v  {} {} {}\n", pos[0], pos[1], pos[2]).unwrap();
