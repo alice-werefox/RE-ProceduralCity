@@ -13,7 +13,7 @@ use std::io::Write;
 use obj::{Obj, SimplePolygon, IndexTuple};
 use noise::Fbm;
 //use noise::Seedable;
-//use noise::MultiFractal;
+use noise::MultiFractal;
 use noise::NoiseModule;
 use cgmath::Vector3;
 use cgmath::ElementWise;
@@ -47,12 +47,11 @@ fn distance_a_to_b(ax: f32, ay: f32, bx: f32, by: f32) -> f32 {
 }
 
 fn return_at(x: f32, y: f32, fbmnoise: &Fbm<f32>) -> f32 {
-    let n = 20.0 * fbmnoise.get([x, y]);
-    let n = n - n.floor();
+    let zero_to_one_noise = (1.0 + fbmnoise.get([x, y])) * 0.5;
+    let z = 0.0f32;
+    let m = z.max(1.0 - 1.0 * distance_a_to_b(x, y, 0.5, 0.5));
 
-    let m = distance_a_to_b(x, y, 0.5, 0.5);
-
-    return (m * 0.15) + (n * 0.85);
+    return (zero_to_one_noise * 0.90) + (m * 0.10);
 }
 
 fn find_l_w(obj: &Obj<SimplePolygon>) -> (f32, f32) {
@@ -98,7 +97,7 @@ fn duplicate(
             Vector3::new(
                 point.x + translation.x,
                 point.y + translation.y,
-                point.z * height_scalar,
+                point.z * height_scalar * 2.0,
             )
         })
         .collect()
@@ -114,16 +113,23 @@ fn generate_city(
     let length = length + spacing;
     let width = width + spacing;
 
-    let fbm: Fbm<f32> = Fbm::new();
+    let fbm: Fbm<f32> = Fbm::new()
+        .set_octaves(1)
+        .set_frequency(6.0)
+        .set_persistence(3.0)
+        .set_lacunarity(30.0);
 
-    let mut output_positions = Vec::new();
-    output_positions.extend_from_slice(positions);
+    let mut output_positions = duplicate(
+        positions,
+        Vector3::new(0.0, 0.0, 0.0),
+        return_at(0.5, 0.5, &fbm),
+    );
 
     let rest_vec: Vec<_> = (1..layers)
-        .into_par_iter()
+        // .into_par_iter()
         .flat_map(|current_layer| {
             (0..(current_layer * 8))
-                .into_par_iter()
+                // .into_par_iter()
                 .flat_map(|current_duplicate| {
                     let current_ratio = current_duplicate as f32 / (current_layer as f32 * 8.0);
 
@@ -142,14 +148,14 @@ fn generate_city(
 
                     // gets into range -1 to +1
                     let coord =
-                        translation.mul_element_wise(
-                            Vector3::new(1.0 / layers as f32, 1.0 / layers as f32, 0.0),
+                        1.0/layers as f32 * translation.mul_element_wise(
+                            Vector3::new(1.0 / length as f32, 1.0 / width as f32, 0.0),
                         );
 
-                    // gets into range -0.5 to +0.5
-                    let coord = coord.mul_element_wise(Vector3::new(1.0 / 2.0, 1.0 / 2.0, 0.0));
+                    // gets into range -0.4 to +0.4
+                    let coord = 0.4 * coord;
 
-                    // gets into range 0 to 1.0
+                    // gets into range 0.1 to 0.9
                     let coord = coord + Vector3::new(0.5, 0.5, 0.0);
 
                     let height_scalar = return_at(coord.x, coord.y, &fbm);
